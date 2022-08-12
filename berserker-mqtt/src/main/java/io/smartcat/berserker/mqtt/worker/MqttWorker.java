@@ -3,6 +3,8 @@ package io.smartcat.berserker.mqtt.worker;
 import java.util.Map;
 
 import org.eclipse.paho.client.mqttv3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import io.smartcat.berserker.api.Worker;
@@ -11,7 +13,7 @@ import io.smartcat.berserker.api.Worker;
  * MQTT worker which publishes messages to MQTT broker.
  */
 public class MqttWorker implements Worker<Map<String, Object>>, AutoCloseable {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(MqttWorker.class);
     private static final String TOPIC = "topic";
     private static final String QOS = "qos";
     private static final String PAYLOAD = "payload";
@@ -36,9 +38,10 @@ public class MqttWorker implements Worker<Map<String, Object>>, AutoCloseable {
      * @param mqttVersion Version of MQTT specification to use.
      * @param username Username to connect to MQTT broker.
      * @param password Password to connect to MQTT broker.
+     * @param keepAliveInterval Keep-Alive interval (0 = disable, default: 60s)
      */
     public MqttWorker(boolean async, String brokerUrl, String clientId, int maxInflight, boolean cleanSession,
-            int connectionTimeout, int mqttVersion, String username, String password) {
+            int connectionTimeout, int mqttVersion, String username, String password, int keepAliveInterval) {
         try {
             this.async = async;
             this.client = new MqttAsyncClient(brokerUrl, clientId, new MemoryPersistence());
@@ -47,6 +50,7 @@ public class MqttWorker implements Worker<Map<String, Object>>, AutoCloseable {
             this.connectOptions.setCleanSession(cleanSession);
             this.connectOptions.setConnectionTimeout(connectionTimeout);
             this.connectOptions.setMqttVersion(mqttVersion);
+            this.connectOptions.setKeepAliveInterval(keepAliveInterval);
             if (username != null) {
                 this.connectOptions.setUserName(username);
             }
@@ -75,6 +79,7 @@ public class MqttWorker implements Worker<Map<String, Object>>, AutoCloseable {
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    LOGGER.debug(String.format("Error on message %s", asyncActionToken), exception);
                     commitFailure.run();
                 }
             });

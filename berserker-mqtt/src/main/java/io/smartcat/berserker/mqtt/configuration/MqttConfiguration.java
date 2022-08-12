@@ -31,6 +31,7 @@ public class MqttConfiguration implements WorkerConfiguration {
     private static final String MQTT_VERSION = "mqtt-version";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
+    private static final String KEEPALIVE_INTERVAL = "keepalive-interval";
 
     private static final String MQTT_VERSION_3_1_1 = "3.1.1";
     private static final String MQTT_VERSION_3_1 = "3.1";
@@ -51,9 +52,9 @@ public class MqttConfiguration implements WorkerConfiguration {
         int mqttVersion = calculateMqttVersion((String) configuration.get(MQTT_VERSION));
         String username = (String) configuration.get(USERNAME);
         String password = (String) configuration.get(PASSWORD);
-
+        int keepAliveInterval = getOptionalValue(configuration, KEEPALIVE_INTERVAL, 60);
         return new MqttWorker(async, brokerUrl, clientId, maxInflight, cleanSession, connectionTimeout, mqttVersion,
-                username, password);
+                username, password, keepAliveInterval);
     }
 
     private int calculateMqttVersion(String mqttVersion) {
